@@ -3,30 +3,41 @@
 ## 목차
 
 - [1. 기본 세팅](#1-기본-세팅)
-- [2. 코드](#3-코드)
-  - [2-1. 네이밍](#3-1-네이밍)
-  - [2-2. ES6](#3-2-es6)
-  - [2-3. 스타일 컴포넌트](#3-3-스타일-컴포넌트)
-  - [2-4. 컴포넌트 내부 순서](#3-4-컴포넌트-내부-순서)
-- [3. 폴더 구조](#4-폴더-구조)
-- [3-1. 라우터 디렉토리](#4-1-라우터-디렉토리)
-  - [3-1-1. routing Folder](#4-1-1-routing-folder)
-  - [3-1-2. component Folder](#4-1-2-component-folder)
-  - [3-1-3. api Folder](#4-1-3-api-folder)
-- [3-2. 루트 디렉토리](#4-2-루트-디렉토리)
-  - [3-2-1. utils](#4-2-1-utils)
-  - [3-2-2. constants](#4-2-2-constants)
-  - [3-2-3. assets](#4-2-3-assets)
-  - [3-2-4. components](#4-2-4-components)
-  - [3-2-5. hooks](#4-2-5-hooks)
-  - [3-2-6. styles](#4-2-6-styles)
-  - [3-2-7. types](#4-2-7-types)
-- [4. 기타](#5-기타)
+- [2. 코드](#2-코드)
+  * [2-1. 네이밍](#2-1-네이밍)
+  * [2-2. ES6](#2-2-es6)
+  * [2-3. 스타일 컴포넌트](#2-3-스타일-컴포넌트)
+  * [2-4. 컴포넌트 내부 순서](#2-4-컴포넌트-내부-순서)
+  * [2-5. any 타입 사용 원칙](#2-5-any-타입-사용-원칙)
+  * [2-6. 상태 일관성 유지](#2-6-상태-일관성-유지)
+  * [2-7. Props 관리](#2-7-props-관리)
+  * [2-8. HTML 태그 및 접근성](#2-8-html-태그-및-접근성)
+  * [2-9. 테스트 코드 작성](#2-9-테스트-코드-작성)
+  * [2-10. useEffect 사용 원칙](#2-10-useeffect-사용-원칙)
+  * [2-11. 새로운 라이브러리 및 기술 적용](#2-11-새로운-라이브러리-및-기술-적용)
+- [3. 폴더 구조](#3-폴더-구조)
+  - [3-1. 라우터 디렉토리](#3-1-라우터-디렉토리)
+    * [3-1-1. routing 폴더](#3-1-1-routing-폴더)
+    * [3-1-2. components 폴더](#3-1-2-components-폴더)
+    * [3-1-3. hooks 폴더](#3-1-3-hooks-폴더)
+    * [3-1-4. api 폴더](#3-1-4-api-폴더)
+    * [3-1-5. context 폴더](#3-1-5-context-폴더)
+  - [3-2. 루트 디렉토리](#3-2-루트-디렉토리)
+    * [3-2-1. utils](#3-2-1-utils)
+    * [3-2-2. constants](#3-2-2-constants)
+    * [3-2-3. assets](#3-2-3-assets)
+    * [3-2-4. components](#3-2-4-components)
+    * [3-2-5. contexts](#3-2-5-contexts)
+    * [3-2-6. hooks](#3-2-6-hooks)
+    * [3-2-7. styles](#3-2-7-styles)
+    * [3-2-8. types](#3-2-8-types)
+- [4. 기타](#4-기타)
 
 ## 1. 기본 세팅
 
-- Prettier, ESLint
-  - 팀원간에 동일한 Prettier, ESLint 설정 파일로 작업을 진행한다.
+- Prettier, ESLint, Husky
+  - 팀원간에 동일한 `Prettier`, `ESLint`, `Husky` 설정 파일로 작업을 진행한다.
+  - `Husky` : git hook을 적용하여 커밋, 푸시전에 Prettier 및 Eslint가 제대로 반영 되있는지 확인하는 npm package
 
 ## 2. 코드
 
@@ -281,11 +292,11 @@ const UserListContainer = ({
   }, [isLoadingUserList]);
 
   // 8. handler
-  const handleClickDeleteUser = (id: string) => {};
-  const handleClickEditUser = (id: string) => {};
+  const handleDeleteUserClick = (id: string) => {};
+  const handleEditUserClick = (id: string) => {};
 
   // 9. etc
-  const isEnabledSaveButton = () => {};
+  const isSaveButtonEnabled = () => {};
 
   if (isLoadingUserList) {
     return <>Loading</>;
@@ -306,6 +317,116 @@ const UserListContainer = ({
 export default UserListContainer;
 ```
 
+### 2-5. any 타입 사용 원칙
+
+- 꼭 필요한 경우, 팀원들과 논의 후 사용한다.
+- 코드 리뷰 단계에서 any 타입에 대한 검토를 진행한다.
+
+  ```ts
+  // Bad case
+  const handleUserClick = (user: any) => {
+    ...
+  }
+  
+  ```
+  
+  ```ts
+  // Good case
+  type User = {
+    id: number;
+    name: string;
+    email: string;
+  };
+  const handleUserClick = (user: User) => {
+    ...
+  }
+  ```
+
+### 2-6. 상태 일관성 유지
+
+- 상태는 **한 가지로만 관리**한다.
+- 예를 들어, API 응답 결과를 또 다른 상태로 관리하는 것을 지양한다.
+
+  ```ts
+  // Bad case
+  const apiRequest = useLazyQuery<ApiResponse, ApiRequest>(
+    GQL_QUERY,
+  );
+  const [data, setData] = useState();
+  
+  useEffect(() => {
+    fetch();
+  }, []);
+  
+  const fetch = async () => {
+    const result = await apiRequest();
+    if (result) {
+      setData(result.data);
+    }
+  };
+  ```
+  
+  ```ts
+  // Good case
+  const { loading, data, error, refetch } = useQuery<
+    ApiResponse,
+    ApiRequest
+  >(GQL_QUERY);
+  ```
+
+### 2-7. Props 관리
+
+- Props Drilling 자제
+  - Depth가 깊어질 경우, React의 **Context** 또는 **Zustand**를 적극 사용한다.
+  - **Context, Zustand 예시 코드 작성 예정**
+- 컴포넌트 역할 분리
+  - 한 컴포넌트의 props가 많아진 경우, 해당 컴포넌트에 너무 많은 역할이 부여된 상황일 수 있으므로
+    **컴포넌트 분리를 고민**한다.
+  - 여러 업체가 범용적으로 사용하는 컴포넌트가 아니라 한 프로젝트 내에서만 사용된다면
+    기획 요구 사항에 맞게 **간결하게 유지**한다.
+
+### 2-8. HTML 태그 및 접근성
+
+- HTML 태그 구별
+
+  - 적합한 태그 사용으로 테스트 코드 작성 시간을 단축하고, [HTML5 웹 표준](https://namu.wiki/w/HTML/%ED%83%9C%EA%B7%B8#s-2)을 따른다.
+  
+    ```ts
+    // Bad case
+    const Button = styled.div`
+      ...
+    `;
+  
+    // Good case
+    const Button = styled.button`
+      ...
+    `;
+    ```
+
+### 2-9. 테스트 코드 작성
+
+- 테스트 코드를 작성하기 쉽게 코드를 작성
+  - 테스트 코드를 작성하기 어려우면 **수동 테스트에 의존**해야하고, 이는 프로젝트가 커질수록 **테스트 시간의 증가**를 초래한다.
+  - 테스트 코드가 기능과 **동일한 중요도를 가진다는 인식으로 코드를 작성**한다.
+
+    <img width="600" src="https://github.com/user-attachments/assets/531e84c5-3fec-4f99-b5f8-eaa1af37325b" />
+- 설계 개선
+  - 테스트 코드 작성이 어렵다면 코드 설계를 재검토한다.
+
+### 2-10. useEffect 사용 원칙
+
+- 의존성 배열
+  - useEffect 훅을 사용할 떄, **의존성 배열을 다 채워야한다.**
+  - 만약, 의존성 배열을 다 채웠는데 예상과 다른 결과가 나온다면 **코드를 잘못 작성했을 확률이 높으므로 재검토**한다.
+
+### 2-11. 새로운 라이브러리 및 기술 적용
+
+- Headless 라이브러리 권장
+  - UI는 제공하지 않고, 비즈니스 로직만을 제공하는 **Headless 라이브러리** 사용을 권장한다.
+    (react-hook-form, Floating-ui)
+- 기술 적용 전 팀원 동의
+  - 새로운 기술 적용 전에 팀원들과 충분히 논의하고, **모범 사례를 문서화**하여 러닝 커브를 최소화한다.
+
 ## 3. 폴더 구조
 
 - 가독성, 유지보수 효율성을 높이기 위해 '뷰', '비즈니스 로직 처리', '데이터 관리'의 책임을 명확히 구분해서 관리해야한다.
@@ -314,39 +435,40 @@ export default UserListContainer;
 - https://developers.google.com/search/docs/crawling-indexing/url-structure?hl=ko
 - 폴더와 파일의 종류는 아래처럼 나뉜다.
   ## 3-1. 라우터 디렉토리
-  ### 3-1-1. routing 폴더
-      - routing 폴더 내부에는 page.tsx, loading.tsx 등 NextJs에서 정의한 파일이 들어간다.
-  ### 3-1-2. components 폴더
-      - component 폴더 내부에는 client component가 들어간다.
-      - hook, custom hook, useEffect 등의 기능이 들어간다.
-      - component는 자식 component를 소유할 수 있다.
-  ### 3-1-3. hooks 폴더
-      - hooks 폴더 내부에는 custom hook 파일이 들어간다.
-      - custom hook은 api 통신과 관련된 기능을 처리하는 hook과 비즈니스 로직을 처리하는 hook으로 나눈다.
-      - api 통신과 관련된 hook은 파일명 끝에 'Query' 또는 'Mutation'을 붙인다.
-      - 비즈니스 로직을 처리하는 hook은 비즈니스 로직이 길어질 때 사용한다.
-  ### 3-1-4. api 폴더
-      - api 폴더 내부에는 page.tsx(server component)에서 사용하는 api 파일이 들어간다.
-  ### 3-1-5. context 폴더
-      - context 폴더 내부에는 해당 페이지에서 사용되는 context(provider) 파일이 들어간다.
+  - 동일한 관심사의 파일은 동일한 폴더 내에 보관하여 관련된 코드를 가깝게 유지한다.
+    ### 3-1-1. routing 폴더
+        - routing 폴더 내부에는 page.tsx, loading.tsx 등 NextJs에서 정의한 파일이 들어간다.
+    ### 3-1-2. components 폴더
+        - component 폴더 내부에는 client component가 들어간다.
+        - hook, custom hook, useEffect 등의 기능이 들어간다.
+        - component는 자식 component를 소유할 수 있다.
+    ### 3-1-3. hooks 폴더
+        - hooks 폴더 내부에는 custom hook 파일이 들어간다.
+        - custom hook은 api 통신과 관련된 기능을 처리하는 hook과 비즈니스 로직을 처리하는 hook으로 나눈다.
+        - api 통신과 관련된 hook은 파일명 끝에 'Query' 또는 'Mutation'을 붙인다.
+        - 비즈니스 로직을 처리하는 hook은 비즈니스 로직이 길어질 때 사용한다.
+    ### 3-1-4. api 폴더
+        - api 폴더 내부에는 page.tsx(server component)에서 사용하는 api 파일이 들어간다.
+    ### 3-1-5. context 폴더
+        - context 폴더 내부에는 해당 페이지에서 사용되는 context(provider) 파일이 들어간다.
   ## 3-2. 루트 디렉토리
   - 공통으로 사용되는 기능은 루트 경로에 폴더를 만들어서 관리한다.
-  ### 3-2-1. utils
-      - 공통으로 사용되는 format 등 모음
-  ### 3-2-2. constants
-      - 상수 모음
-  ### 3-2-3. assets
-      - 이미지 파일이나 아이콘 등의 파일 모음
-  ### 3-2-4. components
-      - 컴포넌트는 모음
-  ### 3-2-5. contexts
-      - context(provider) 모음
-  ### 3-2-6. hooks
-      - custom hook 모음
-  ### 3-2-7. styles
-      - theme, color 모음
-  ### 3-2-8. types
-      - 타입 모음
+    ### 3-2-1. utils
+        - 공통으로 사용되는 format 등 모음
+    ### 3-2-2. constants
+        - 상수 모음
+    ### 3-2-3. assets
+        - 이미지 파일이나 아이콘 등의 파일 모음
+    ### 3-2-4. components
+        - 컴포넌트는 모음
+    ### 3-2-5. contexts
+        - context(provider) 모음
+    ### 3-2-6. hooks
+        - custom hook 모음
+    ### 3-2-7. styles
+        - theme, color 모음
+    ### 3-2-8. types
+        - 타입 모음
 
 ## 4. 기타
 
