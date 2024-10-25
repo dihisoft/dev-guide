@@ -176,3 +176,4 @@
 
 - 리뷰어가 approve 한 경우, 자신의 Pull Request는 스스로 merge 한다.
 - **merge 하기 전에는 ‘npm run build’ 같은 명령어를 수행해서 build 에러가 없는지 체크한 후 merge 한다.**
+  ㅁㅁㅁ
